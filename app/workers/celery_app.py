@@ -13,10 +13,11 @@ celery.conf.update(
     result_serializer="json",
     accept_content=["json"],
     timezone="UTC",
+    broker_connection_retry_on_startup=True,
     beat_schedule={
         "poll-reviews-every-15-min": {
             "task": "app.workers.tasks.poll_reviews",
-            "schedule": 900.0,  # seconds
+            "schedule": 900.0,
         }
     }
 )

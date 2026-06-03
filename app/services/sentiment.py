@@ -8,15 +8,16 @@ def get_classifier():
         _classifier = pipeline(
             task="sentiment-analysis",
             model="cardiffnlp/twitter-roberta-base-sentiment-latest",
-            device=-1  # force CPU
+            device=-1
         )
     return _classifier
 
 def analyze(text: str) -> dict:
     clf = get_classifier()
     result = clf(text[:512])[0]
+    label = result["label"].lower()
     return {
-        "label": result["label"].lower(),
+        "label": label,
         "score": round(result["score"], 4),
-        "is_negative": result["label"].lower() in {"negative", "label_0"}
+        "is_negative": label == "negative"
     }

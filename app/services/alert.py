@@ -12,13 +12,12 @@ async def _send(message: str):
         )
 
 def send_alert(review: dict, sentiment: dict, draft: str):
-    """Sends a formatted Telegram alert. Called from Celery task."""
-    stars = "⭐" * review.get("stars", 1)
+    stars = "⭐" * max(1, review.get("stars", 1))
     message = (
-        f"*New alert — {review['platform']}*\n"
+        f"🚨 *New Alert — {review['platform'].title()}*\n"
         f"Rating: {stars}\n"
         f"Sentiment: `{sentiment['label']}` ({sentiment['score']})\n\n"
-        f"*Review:*\n_{review['text']}_\n\n"
-        f"*Suggested reply:*\n{draft}"
+        f"*Review:*\n_{review['text'][:200]}_\n\n"
+        f"*Suggested Reply:*\n{draft}"
     )
     asyncio.run(_send(message))

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reputation Monitor Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui; background: #0f172a; color: #e2e8f0; padding: 24px; }
+  h1 { color: #38bdf8; margin-bottom: 24px; font-size: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+  .card h3 { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+  .card .val { font-size: 32px; font-weight: 700; color: #38bdf8; }
+  .card .val.red { color: #f87171; }
+  .card .val.green { color: #4ade80; }
+  .reviews { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+  .reviews h2 { margin-bottom: 16px; font-size: 16px; }
+  .review-item { border-bottom: 1px solid #334155; padding: 12px 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+  .platform { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+  .stars { color: #fbbf24; }
+  .sentiment { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .negative { background: #7f1d1d; color: #fca5a5; }
+  .positive { background: #14532d; color: #86efac; }
+  .neutral { background: #1e3a5f; color: #93c5fd; }
+  .review-text { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+  .draft { font-size: 12px; color: #4ade80; font-style: italic; margin-top: 6px; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  canvas { max-height: 250px; }
+  .loading { color: #64748b; text-align: center; padding: 40px; }
+</style>
+</head>
+<body>
+<h1>🔍 AI Reputation Monitor</h1>
+
+<div class="grid">
+  <div class="card"><h3>Total Reviews</h3><div class="val" id="total">—</div></div>
+  <div class="card"><h3>Alerts Sent</h3><div class="val red" id="alerts">—</div></div>
+  <div class="card"><h3>Avg Rating</h3><div class="val" id="avg_stars">—</div></div>
+  <div class="card"><h3>Competitor Mentions</h3><div class="val red" id="competitors">—</div></div>
+</div>
+
+<div class="charts">
+  <div class="card"><h3>Sentiment Breakdown</h3><canvas id="sentimentChart"></canvas></div>
+  <div class="card"><h3>Reviews by Platform</h3><canvas id="platformChart"></canvas></div>
+</div>
+
+<div class="reviews" style="margin-top:24px">
+  <h2>Recent Reviews</h2>
+  <div id="reviews-list"><div class="loading">Loading reviews...</div></div>
+</div>
+
+<script>
+const API = window.location.origin + "/api/v1";
+
+async function loadAnalytics() {
+  try {
+    const res = await fetch(`${API}/analytics`);
+    const data = await res.json();
+    document.getElementById("total").textContent = data.total_reviews || 0;
+    document.getElementById("alerts").textContent = data.total_alerts || 0;
+    document.getElementById("avg_stars").textContent = data.avg_star_rating || 0;
+    document.getElementById("competitors").textContent = data.competitor_mentions || 0;
+
+    // Sentiment chart
+    new Chart(document.getElementById("sentimentChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Negative", "Neutral", "Positive"],
+        datasets: [{
+          data: [data.negative_count||0, data.neutral_count||0, data.positive_count||0],
+          backgroundColor: ["#f87171", "#94a3b8", "#4ade80"]
+        }]
+      },
+      options: { plugins: { legend: { labels: { color: "#e2e8f0" } } } }
+    });
+
+    // Platform chart
+    const platforms = Object.keys(data.by_platform || {});
+    const totals = platforms.map(p => data.by_platform[p].total);
+    new Chart(document.getElementById("platformChart"), {
+      type: "bar",
+      data: {
+        labels: platforms,
+        datasets: [{
+          label: "Reviews",
+          data: totals,
+          backgroundColor: "#38bdf8"
+        }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: "#e2e8f0" } } },
+        scales: {
+          x: { ticks: { color: "#94a3b8" } },
+          y: { ticks: { color: "#94a3b8" } }
+        }
+      }
+    });
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function loadReviews() {
+  try {
+    const res = await fetch(`${API}/reviews?limit=10`);
+    const reviews = await res.json();
+    const container = document.getElementById("reviews-list");
+
+    if (!reviews.length) {
+      container.innerHTML = '<div class="loading">No reviews yet. Send a test review!</div>';
+      return;
+    }
+
+    container.innerHTML = reviews.map(r => `
+      <div class="review-item">
+        <div class="review-meta">
+          <span class="platform">${r.platform}</span>
+          <span class="stars">${"⭐".repeat(r.stars||1)}</span>
+          <span class="sentiment ${r.sentiment_label}">${r.sentiment_label}</span>
+          ${r.competitor_mentioned ? '<span class="sentiment negative">⚠️ Competitor</span>' : ''}
+          ${r.alert_sent ? '<span class="sentiment negative">🚨 Alert Sent</span>' : ''}
+        </div>
+        <div class="review-text">"${r.text}"</div>
+        ${r.draft_response ? `<div class="draft">💬 Draft: ${r.draft_response}</div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+loadAnalytics();
+loadReviews();
+setInterval(() => { loadAnalytics(); loadReviews(); }, 30000);
+</script>
+</body>
+</html>

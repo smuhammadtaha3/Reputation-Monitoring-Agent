@@ -1,40 +1,42 @@
 from datetime import datetime
 
+COMPETITOR_KEYWORDS = [
+    "mcdonald", "subway", "kfc", "burger king", "starbucks",
+    "dominos", "pizza hut", "next door", "other place", "competitor"
+]
+
 def fetch_reviews(platform: str) -> list[dict]:
-    """
-    Returns a list of review dicts.
-    Replace each block with the real platform API call.
-    """
-    # --- MOCK DATA (replace with real API calls) ---
-    mock_reviews = [
+    """Mock reviews — replace with real API later"""
+    return [
         {
             "platform": platform,
-            "text": "Absolutely terrible service. Waited 45 minutes and no one helped.",
+            "text": "Absolutely terrible service. Waited 45 minutes, staff was rude.",
             "stars": 1,
-            "author": "John D.",
+            "author": "Ahmed K.",
             "fetched_at": datetime.utcnow().isoformat()
         },
         {
             "platform": platform,
-            "text": "The food was okay but honestly McDonald's nearby is way better.",
+            "text": "Food was okay but honestly McDonald's nearby is way better.",
             "stars": 3,
-            "author": "Sara K.",
+            "author": "Sara M.",
             "fetched_at": datetime.utcnow().isoformat()
         },
         {
             "platform": platform,
-            "text": "Lovely experience! Will definitely come back.",
+            "text": "Lovely experience! Staff was helpful. Will definitely return.",
             "stars": 5,
             "author": "Ali R.",
             "fetched_at": datetime.utcnow().isoformat()
         },
+        {
+            "platform": platform,
+            "text": "Never coming back. Worst experience of my life.",
+            "stars": 1,
+            "author": "John D.",
+            "fetched_at": datetime.utcnow().isoformat()
+        },
     ]
-    return mock_reviews
-
-COMPETITOR_KEYWORDS = [
-    "mcdonald", "subway", "kfc", "burger king", "starbucks",
-    "competitor", "other place", "next door"
-]
 
 def has_competitor_mention(text: str) -> bool:
     text_lower = text.lower()

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
-from app.workers.tasks import poll_reviews
+from datetime import datetime
 from app.core.database import supabase
+from app.services.analytics import get_platform_stats, get_sentiment_trend
 
 router = APIRouter()
 
@@ -13,20 +14,22 @@ class IngestRequest(BaseModel):
 
 @router.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "message": "Reputation Agent is running"}
 
 @router.post("/ingest")
 def ingest_review(req: IngestRequest):
-    """Manually trigger processing of a single review. Great for testing."""
     from app.services.sentiment import analyze
     from app.services.scraper import has_competitor_mention
     from app.services.draft import generate_response
     from app.services.alert import send_alert
-    from datetime import datetime
 
     sentiment = analyze(req.text)
     competitor = has_competitor_mention(req.text)
-    should_alert = req.stars < 3 or sentiment["is_negative"] or competitor
+    should_alert = (
+        req.stars < 3 or
+        sentiment["is_negative"] or
+        competitor
+    )
     draft = None
 
     if should_alert:
@@ -34,6 +37,19 @@ def ingest_review(req: IngestRequest):
         review_dict = req.model_dump()
         review_dict["fetched_at"] = datetime.utcnow().isoformat()
         send_alert(review_dict, sentiment, draft)
+
+    supabase.table("reviews").insert({
+        "platform": req.platform,
+        "text": req.text,
+        "stars": req.stars,
+        "author": req.author,
+        "sentiment_label": sentiment["label"],
+        "sentiment_score": sentiment["score"],
+        "competitor_mentioned": competitor,
+        "alert_sent": should_alert,
+        "draft_response": draft,
+        "fetched_at": datetime.utcnow().isoformat()
+    }).execute()
 
     return {
         "sentiment": sentiment,
@@ -44,18 +60,23 @@ def ingest_review(req: IngestRequest):
 
 @router.get("/reviews")
 def get_reviews(limit: int = 20):
-    """Returns recent reviews from Supabase."""
-    result = (
-        supabase.table("reviews")
-        .select("*")
-        .order("fetched_at", desc=True)
-        .limit(limit)
+    result = supabase.table("reviews")\
+        .select("*")\
+        .order("fetched_at", desc=True)\
+        .limit(limit)\
         .execute()
-    )
     return result.data
+
+@router.get("/analytics")
+def analytics():
+    return get_platform_stats()
+
+@router.get("/analytics/trend")
+def trend():
+    return get_sentiment_trend()
 
 @router.post("/trigger-poll")
 def trigger_poll():
-    """Manually fires the Celery poll task. Useful during dev."""
+    from app.workers.tasks import poll_reviews
     task = poll_reviews.delay()
     return {"task_id": task.id, "status": "queued"}
