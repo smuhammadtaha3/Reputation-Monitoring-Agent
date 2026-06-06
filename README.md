@@ -36,6 +36,7 @@ The **AI Reputation Monitoring Agent** is a production‑ready system that conti
 |------|----------------|
 | **API** | FastAPI, Uvicorn, Pydantic |
 | **NLP** | HuggingFace Transformers, `cardiffnlp/twitter-roberta-base-sentiment` (PyTorch) |
+| **AI/ML Models & Libraries** | Pandas,Matplotlib, Scikit-Learn, Seaborn, WrodNetLemmatizer, Stopwrods, Logistic Regression,Naive Bayes,   |
 | **Generative AI** | Groq API → LLaMA 3.3 70B |
 | **Data** | Supabase (PostgreSQL), SQLAlchemy |
 | **Queue** | Celery, Redis (Upstash) |
