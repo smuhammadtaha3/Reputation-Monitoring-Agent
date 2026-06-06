@@ -1,5 +1,8 @@
 # AI Reputation Monitoring Agent
 
+I'm Still working on this project
+project live at: https://reputation-monitoring-agent-production.up.railway.app/dashboard
+
 ## 📚 Project Overview
 The **AI Reputation Monitoring Agent** is a production‑ready system that continuously monitors online review platforms, classifies sentiment with a pre‑trained RoBERTa model, generates response drafts via Groq‑hosted LLaMA 3.3 70B, stores everything in Supabase (PostgreSQL), and pushes real‑time alerts to a Telegram channel. The platform is fully containerised and deployed on Railway.
 
