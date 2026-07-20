@@ -1,955 +1,1146 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RepuSense — AI Reputation Monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-:root {
-  --bg: #080c14;
-  --bg2: #0d1320;
-  --bg3: #111827;
-  --border: rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.1);
-  --accent: #00e5ff;
-  --accent2: #ff3d6b;
-  --accent3: #a855f7;
-  --accent4: #22c55e;
-  --text: #f1f5f9;
-  --text2: #94a3b8;
-  --text3: #475569;
-  --card: rgba(255,255,255,0.03);
-  --glow: 0 0 40px rgba(0,229,255,0.08);
-}
-
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* Background grid */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.wrap { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
-
-/* ── SIDEBAR ── */
-.sidebar {
-  position: fixed;
-  left: 0; top: 0; bottom: 0;
-  width: 220px;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  padding: 28px 0;
-  z-index: 100;
-}
-
-.logo {
-  padding: 0 24px 32px;
-  border-bottom: 1px solid var(--border);
-}
-
-.logo-text {
-  font-family: 'Syne', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--accent);
-  letter-spacing: -0.5px;
-}
-
-.logo-sub {
-  font-size: 10px;
-  color: var(--text3);
-  font-family: 'DM Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-top: 4px;
-}
-
-.nav {
-  padding: 24px 12px;
-  flex: 1;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text2);
-  transition: all 0.2s;
-  margin-bottom: 4px;
-  border: 1px solid transparent;
-}
-
-.nav-item:hover { background: var(--card); color: var(--text); }
-.nav-item.active {
-  background: rgba(0,229,255,0.08);
-  color: var(--accent);
-  border-color: rgba(0,229,255,0.15);
-}
-
-.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
-
-.sidebar-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-}
-
-.status-dot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--text3);
-  font-family: 'DM Mono', monospace;
-}
-
-.dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent4);
-  box-shadow: 0 0 8px var(--accent4);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,100% { opacity:1; } 50% { opacity:0.4; }
-}
-
-/* ── MAIN ── */
-.main {
-  margin-left: 220px;
-  min-height: 100vh;
-}
-
-/* ── TOPBAR ── */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(8,12,20,0.8);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.page-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-title span { color: var(--accent); }
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #000;
-}
-.btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text2);
-  border: 1px solid var(--border2);
-}
-.btn-ghost:hover { background: var(--card); color: var(--text); }
-
-/* ── CONTENT ── */
-.content { padding: 28px 32px; }
-
-/* ── PAGES ── */
-.page { display: none; animation: fadeIn 0.3s ease; }
-.page.active { display: block; }
-
-@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
-/* ── STAT CARDS ── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
-.stat-card:hover { border-color: var(--border2); }
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-}
-
-.stat-card.blue::before { background: linear-gradient(90deg, var(--accent), transparent); }
-.stat-card.red::before { background: linear-gradient(90deg, var(--accent2), transparent); }
-.stat-card.purple::before { background: linear-gradient(90deg, var(--accent3), transparent); }
-.stat-card.green::before { background: linear-gradient(90deg, var(--accent4), transparent); }
-
-.stat-label {
-  font-size: 11px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-family: 'DM Mono', monospace;
-  margin-bottom: 12px;
-}
-
-.stat-value {
-  font-family: 'Syne', sans-serif;
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1;
-  margin-bottom: 6px;
-}
-
-.stat-card.blue .stat-value { color: var(--accent); }
-.stat-card.red .stat-value { color: var(--accent2); }
-.stat-card.purple .stat-value { color: var(--accent3); }
-.stat-card.green .stat-value { color: var(--accent4); }
-
-.stat-sub {
-  font-size: 11px;
-  color: var(--text3);
-}
-
-.stat-icon {
-  position: absolute;
-  top: 20px; right: 20px;
-  font-size: 28px;
-  opacity: 0.15;
-}
-
-/* ── CHARTS ROW ── */
-.charts-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.chart-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.card-badge {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-family: 'DM Mono', monospace;
-  background: rgba(0,229,255,0.1);
-  color: var(--accent);
-  border: 1px solid rgba(0,229,255,0.2);
-}
-
-canvas { max-height: 200px !important; }
-
-/* ── REVIEWS TABLE ── */
-.reviews-section {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.section-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.review-row {
-  display: grid;
-  grid-template-columns: 100px 60px 100px 1fr 140px 110px;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
-  font-size: 13px;
-}
-
-.review-row:hover { background: rgba(255,255,255,0.02); }
-.review-row:last-child { border-bottom: none; }
-
-.review-row.header {
-  font-size: 10px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-family: 'DM Mono', monospace;
-  background: rgba(0,0,0,0.2);
-}
-
-.platform-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  color: var(--text2);
-}
-
-.stars { color: #fbbf24; font-size: 11px; letter-spacing: 1px; }
-
-.sentiment-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 500;
-  font-family: 'DM Mono', monospace;
-}
-
-.sentiment-badge.negative { background: rgba(255,61,107,0.12); color: #ff3d6b; border: 1px solid rgba(255,61,107,0.2); }
-.sentiment-badge.positive { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
-.sentiment-badge.neutral { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.15); }
-
-.review-text-cell {
-  color: var(--text2);
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.alert-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--accent2);
-  font-family: 'DM Mono', monospace;
-}
-
-.no-alert { color: var(--text3); font-size: 10px; font-family: 'DM Mono', monospace; }
-
-/* ── ANALYTICS PAGE ── */
-.analytics-header {
-  margin-bottom: 24px;
-}
-
-.analytics-header h2 {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-
-.analytics-header p {
-  color: var(--text2);
-  font-size: 13px;
-}
-
-.analytics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.analytics-grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.big-chart-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-}
-
-.big-chart-card canvas { max-height: 280px !important; }
-
-/* Platform stats */
-.platform-stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.platform-stat:last-child { border-bottom: none; }
-
-.platform-name {
-  font-size: 13px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.platform-bar-wrap {
-  flex: 1;
-  margin: 0 16px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.platform-bar {
-  height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--accent3));
-  transition: width 1s ease;
-}
-
-.platform-count {
-  font-size: 12px;
-  color: var(--text2);
-  font-family: 'DM Mono', monospace;
-  min-width: 30px;
-  text-align: right;
-}
-
-/* ── ALERTS PAGE ── */
-.alerts-list { display: flex; flex-direction: column; gap: 12px; }
-
-.alert-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px 24px;
-  border-left: 3px solid var(--accent2);
-  transition: all 0.2s;
-}
-
-.alert-card:hover {
-  border-color: rgba(255,61,107,0.3);
-  background: rgba(255,61,107,0.03);
-}
-
-.alert-card.competitor { border-left-color: var(--accent3); }
-.alert-card.competitor:hover { border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.03); }
-
-.alert-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.alert-platform { font-weight: 500; font-size: 13px; }
-
-.alert-review {
-  font-size: 13px;
-  color: var(--text2);
-  line-height: 1.6;
-  margin-bottom: 12px;
-  font-style: italic;
-}
-
-.draft-box {
-  background: rgba(34,197,94,0.06);
-  border: 1px solid rgba(34,197,94,0.15);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 12px;
-  color: #4ade80;
-  line-height: 1.6;
-}
-
-.draft-label {
-  font-size: 10px;
-  color: var(--accent4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: 'DM Mono', monospace;
-  margin-bottom: 4px;
-}
-
-/* ── EMPTY STATE ── */
-.empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text3);
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-.empty p { font-size: 14px; }
-
-/* ── LOADING ── */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg3) 25%, rgba(255,255,255,0.05) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 6px;
-  height: 16px;
-}
-
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RepuSense — AI Reputation Monitor</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #080c14;
+      --bg2: #0d1320;
+      --bg3: #111827;
+      --border: rgba(255, 255, 255, 0.06);
+      --border2: rgba(255, 255, 255, 0.1);
+      --accent: #00e5ff;
+      --accent2: #ff3d6b;
+      --accent3: #a855f7;
+      --accent4: #22c55e;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #475569;
+      --card: rgba(255, 255, 255, 0.03);
+      --glow: 0 0 40px rgba(0, 229, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 220px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      z-index: 100;
+    }
+
+    .logo {
+      padding: 0 24px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+
+    .nav {
+      padding: 24px 12px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text2);
+      transition: all 0.2s;
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 229, 255, 0.08);
+      color: var(--accent);
+      border-color: rgba(0, 229, 255, 0.15);
+    }
+
+    .nav-item .icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent4);
+      box-shadow: 0 0 8px var(--accent4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 220px;
+      min-height: 100vh;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .page-title span {
+      color: var(--accent);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-ghost:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      padding: 28px 32px;
+    }
+
+    /* ── PAGES ── */
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── STAT CARDS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .stat-card.blue::before {
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+
+    .stat-card.red::before {
+      background: linear-gradient(90deg, var(--accent2), transparent);
+    }
+
+    .stat-card.purple::before {
+      background: linear-gradient(90deg, var(--accent3), transparent);
+    }
+
+    .stat-card.green::before {
+      background: linear-gradient(90deg, var(--accent4), transparent);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card.blue .stat-value {
+      color: var(--accent);
+    }
+
+    .stat-card.red .stat-value {
+      color: var(--accent2);
+    }
+
+    .stat-card.purple .stat-value {
+      color: var(--accent3);
+    }
+
+    .stat-card.green .stat-value {
+      color: var(--accent4);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .stat-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 28px;
+      opacity: 0.15;
+    }
+
+    /* ── CHARTS ROW ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .card-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-family: 'DM Mono', monospace;
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+    }
+
+    canvas {
+      max-height: 200px !important;
+    }
+
+    /* ── REVIEWS TABLE ── */
+    .reviews-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .review-row {
+      display: grid;
+      grid-template-columns: 100px 60px 100px 1fr 140px 110px;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      font-size: 13px;
+    }
+
+    .review-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .review-row:last-child {
+      border-bottom: none;
+    }
+
+    .review-row.header {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: 'DM Mono', monospace;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    .stars {
+      color: #fbbf24;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    .sentiment-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .sentiment-badge.negative {
+      background: rgba(255, 61, 107, 0.12);
+      color: #ff3d6b;
+      border: 1px solid rgba(255, 61, 107, 0.2);
+    }
+
+    .sentiment-badge.positive {
+      background: rgba(34, 197, 94, 0.12);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .sentiment-badge.neutral {
+      background: rgba(148, 163, 184, 0.1);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .review-text-cell {
+      color: var(--text2);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .alert-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--accent2);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .no-alert {
+      color: var(--text3);
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── ANALYTICS PAGE ── */
+    .analytics-header {
+      margin-bottom: 24px;
+    }
+
+    .analytics-header h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .analytics-header p {
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .analytics-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .big-chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .big-chart-card canvas {
+      max-height: 280px !important;
+    }
+
+    /* Platform stats */
+    .platform-stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .platform-stat:last-child {
+      border-bottom: none;
+    }
+
+    .platform-name {
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .platform-bar-wrap {
+      flex: 1;
+      margin: 0 16px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .platform-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      transition: width 1s ease;
+    }
+
+    .platform-count {
+      font-size: 12px;
+      color: var(--text2);
+      font-family: 'DM Mono', monospace;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* ── ALERTS PAGE ── */
+    .alerts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .alert-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      border-left: 3px solid var(--accent2);
+      transition: all 0.2s;
+    }
+
+    .alert-card:hover {
+      border-color: rgba(255, 61, 107, 0.3);
+      background: rgba(255, 61, 107, 0.03);
+    }
+
+    .alert-card.competitor {
+      border-left-color: var(--accent3);
+    }
+
+    .alert-card.competitor:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.03);
+    }
+
+    .alert-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .alert-platform {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .alert-review {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .draft-box {
+      background: rgba(34, 197, 94, 0.06);
+      border: 1px solid rgba(34, 197, 94, 0.15);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #4ade80;
+      line-height: 1.6;
+    }
+
+    .draft-label {
+      font-size: 10px;
+      color: var(--accent4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty p {
+      font-size: 14px;
+    }
+
+    /* ── LOADING ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg3) 25%, rgba(255, 255, 255, 0.05) 50%, var(--bg3) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+      height: 16px;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="logo">
-    <div class="logo-text">RepuSense</div>
-    <div class="logo-sub">AI Monitor v2.0</div>
-  </div>
-  <nav class="nav">
-    <div class="nav-item active" onclick="showPage('dashboard', this)">
-      <span class="icon">⬡</span> Dashboard
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text">RepuSense</div>
+      <div class="logo-sub">AI Monitor v2.0</div>
     </div>
-    <div class="nav-item" onclick="showPage('analytics', this)">
-      <span class="icon">◈</span> Analytics
-    </div>
-    <div class="nav-item" onclick="showPage('alerts', this)">
-      <span class="icon">◉</span> Alerts
-      <span id="alert-count" style="margin-left:auto;background:rgba(255,61,107,0.15);color:#ff3d6b;border-radius:20px;padding:2px 7px;font-size:10px;font-family:'DM Mono',monospace"></span>
-    </div>
-    <div class="nav-item" onclick="showPage('reviews', this)">
-      <span class="icon">◫</span> Reviews
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="status-dot">
-      <div class="dot"></div>
-      <span>Agent Online</span>
-    </div>
-  </div>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="page-title" id="page-heading">Overview <span>Dashboard</span></div>
-    <div class="topbar-right">
-      <button class="btn btn-ghost" onclick="refreshAll()">↻ Refresh</button>
-      <button class="btn btn-primary" onclick="triggerPoll()">⚡ Poll Now</button>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="icon">⬡</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('analytics', this)">
+        <span class="icon">◈</span> Analytics
+      </div>
+      <div class="nav-item" onclick="showPage('alerts', this)">
+        <span class="icon">◉</span> Alerts
+        <span id="alert-count"
+          style="margin-left:auto;background:rgba(255,61,107,0.15);color:#ff3d6b;border-radius:20px;padding:2px 7px;font-size:10px;font-family:'DM Mono',monospace"></span>
+      </div>
+      <div class="nav-item" onclick="showPage('reviews', this)">
+        <span class="icon">◫</span> Reviews
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-dot">
+        <div class="dot"></div>
+        <span>Agent Online</span>
+      </div>
     </div>
   </div>
 
-  <div class="content">
+  <!-- MAIN -->
+  <div class="main">
 
-    <!-- ── DASHBOARD PAGE ── -->
-    <div class="page active" id="page-dashboard">
-
-      <div class="stats-grid">
-        <div class="stat-card blue">
-          <div class="stat-icon">◈</div>
-          <div class="stat-label">Total Reviews</div>
-          <div class="stat-value" id="s-total">—</div>
-          <div class="stat-sub">All platforms</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-icon">◉</div>
-          <div class="stat-label">Alerts Sent</div>
-          <div class="stat-value" id="s-alerts">—</div>
-          <div class="stat-sub">Negative detected</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="stat-icon">⬡</div>
-          <div class="stat-label">Avg Rating</div>
-          <div class="stat-value" id="s-rating">—</div>
-          <div class="stat-sub">Out of 5.0</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-icon">◫</div>
-          <div class="stat-label">Positive %</div>
-          <div class="stat-value" id="s-positive">—</div>
-          <div class="stat-sub">Of all reviews</div>
-        </div>
-      </div>
-
-      <div class="charts-row">
-        <div class="chart-card">
-          <div class="card-header">
-            <div class="card-title">Sentiment Split</div>
-            <div class="card-badge">LIVE</div>
-          </div>
-          <canvas id="sentimentChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="card-header">
-            <div class="card-title">Platform Volume</div>
-          </div>
-          <canvas id="platformChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="card-header">
-            <div class="card-title">Alert Breakdown</div>
-          </div>
-          <canvas id="alertChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Recent Reviews -->
-      <div class="reviews-section">
-        <div class="section-header">
-          <div class="section-title">Recent Reviews</div>
-          <div class="card-badge">Last 10</div>
-        </div>
-        <div class="review-row header">
-          <div>Platform</div>
-          <div>Rating</div>
-          <div>Sentiment</div>
-          <div>Review</div>
-          <div>Draft Response</div>
-          <div>Alert</div>
-        </div>
-        <div id="reviews-table-body">
-          <div class="empty"><div class="empty-icon">◈</div><p>Loading reviews...</p></div>
-        </div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title" id="page-heading">Overview <span>Dashboard</span></div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost" onclick="refreshAll()">↻ Refresh</button>
+        <button class="btn btn-primary" onclick="triggerPoll()">⚡ Poll Now</button>
       </div>
     </div>
 
-    <!-- ── ANALYTICS PAGE ── -->
-    <div class="page" id="page-analytics">
-      <div class="analytics-header">
-        <h2>Deep <span style="color:var(--accent)">Analytics</span></h2>
-        <p>Sentiment trends, platform performance, and competitor intelligence</p>
+    <div class="content">
+
+      <!-- ── DASHBOARD PAGE ── -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- Live Status Bar -->
+        <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);
+     border-radius:10px;padding:12px 20px;margin-bottom:20px;
+     display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="dot"></div>
+            <span style="font-size:12px;color:var(--text2)">Scheduler Active</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2)">
+            Next poll: <span id="next-poll"
+              style="color:var(--accent);font-family:'DM Mono',monospace">loading...</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2)">
+            Last updated: <span id="last-updated" style="color:var(--accent);font-family:'DM Mono',monospace">—</span>
+          </div>
+          <button class="btn btn-ghost" style="margin-left:auto;font-size:11px" onclick="triggerPoll()">
+            ⚡ Poll Now
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">◈</div>
+            <div class="stat-label">Total Reviews</div>
+            <div class="stat-value" id="s-total">—</div>
+            <div class="stat-sub">All platforms</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon">◉</div>
+            <div class="stat-label">Alerts Sent</div>
+            <div class="stat-value" id="s-alerts">—</div>
+            <div class="stat-sub">Negative detected</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">⬡</div>
+            <div class="stat-label">Avg Rating</div>
+            <div class="stat-value" id="s-rating">—</div>
+            <div class="stat-sub">Out of 5.0</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">◫</div>
+            <div class="stat-label">Positive %</div>
+            <div class="stat-value" id="s-positive">—</div>
+            <div class="stat-sub">Of all reviews</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="card-header">
+              <div class="card-title">Sentiment Split</div>
+              <div class="card-badge">LIVE</div>
+            </div>
+            <canvas id="sentimentChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="card-header">
+              <div class="card-title">Platform Volume</div>
+            </div>
+            <canvas id="platformChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="card-header">
+              <div class="card-title">Alert Breakdown</div>
+            </div>
+            <canvas id="alertChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Reviews -->
+        <div class="reviews-section">
+          <div class="section-header">
+            <div class="section-title">Recent Reviews</div>
+            <div class="card-badge">Last 10</div>
+          </div>
+          <div class="review-row header">
+            <div>Platform</div>
+            <div>Rating</div>
+            <div>Sentiment</div>
+            <div>Review</div>
+            <div>Draft Response</div>
+            <div>Alert</div>
+          </div>
+          <div id="reviews-table-body">
+            <div class="empty">
+              <div class="empty-icon">◈</div>
+              <p>Loading reviews...</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="analytics-grid">
-        <div class="big-chart-card">
-          <div class="card-header">
-            <div class="card-title">Sentiment Score Distribution</div>
-          </div>
-          <canvas id="sentimentDistChart"></canvas>
+      <!-- ── ANALYTICS PAGE ── -->
+      <div class="page" id="page-analytics">
+        <div class="analytics-header">
+          <h2>Deep <span style="color:var(--accent)">Analytics</span></h2>
+          <p>Sentiment trends, platform performance, and competitor intelligence</p>
         </div>
-        <div class="big-chart-card">
-          <div class="card-header">
-            <div class="card-title">Star Rating Distribution</div>
+
+        <div class="analytics-grid">
+          <div class="big-chart-card">
+            <div class="card-header">
+              <div class="card-title">Sentiment Score Distribution</div>
+            </div>
+            <canvas id="sentimentDistChart"></canvas>
           </div>
-          <canvas id="starsChart"></canvas>
+          <div class="big-chart-card">
+            <div class="card-header">
+              <div class="card-title">Star Rating Distribution</div>
+            </div>
+            <canvas id="starsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="big-chart-card">
+            <div class="card-header">
+              <div class="card-title">Platform Performance</div>
+            </div>
+            <div id="platform-bars" style="padding-top:8px"></div>
+          </div>
+          <div class="big-chart-card">
+            <div class="card-header">
+              <div class="card-title">Alert Triggers</div>
+            </div>
+            <canvas id="triggersChart"></canvas>
+          </div>
+          <div class="big-chart-card">
+            <div class="card-header">
+              <div class="card-title">Key Metrics</div>
+            </div>
+            <div id="key-metrics" style="padding-top:8px"></div>
+          </div>
         </div>
       </div>
 
-      <div class="analytics-grid-3">
-        <div class="big-chart-card">
-          <div class="card-header">
-            <div class="card-title">Platform Performance</div>
-          </div>
-          <div id="platform-bars" style="padding-top:8px"></div>
+      <!-- ── ALERTS PAGE ── -->
+      <div class="page" id="page-alerts">
+        <div style="margin-bottom:24px">
+          <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px">
+            Active <span style="color:var(--accent2)">Alerts</span>
+          </h2>
+          <p style="color:var(--text2);font-size:13px">Reviews that triggered alerts with AI-generated responses</p>
         </div>
-        <div class="big-chart-card">
-          <div class="card-header">
-            <div class="card-title">Alert Triggers</div>
+        <div class="alerts-list" id="alerts-list">
+          <div class="empty">
+            <div class="empty-icon">◉</div>
+            <p>Loading alerts...</p>
           </div>
-          <canvas id="triggersChart"></canvas>
-        </div>
-        <div class="big-chart-card">
-          <div class="card-header">
-            <div class="card-title">Key Metrics</div>
-          </div>
-          <div id="key-metrics" style="padding-top:8px"></div>
         </div>
       </div>
+
+      <!-- ── REVIEWS PAGE ── -->
+      <div class="page" id="page-reviews">
+        <div style="margin-bottom:24px">
+          <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px">
+            All <span style="color:var(--accent3)">Reviews</span>
+          </h2>
+          <p style="color:var(--text2);font-size:13px">Complete review database from all platforms</p>
+        </div>
+        <div class="reviews-section">
+          <div class="review-row header">
+            <div>Platform</div>
+            <div>Rating</div>
+            <div>Sentiment</div>
+            <div>Review</div>
+            <div>Draft Response</div>
+            <div>Alert</div>
+          </div>
+          <div id="all-reviews-body">
+            <div class="empty">
+              <div class="empty-icon">◫</div>
+              <p>Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    <!-- ── ALERTS PAGE ── -->
-    <div class="page" id="page-alerts">
-      <div style="margin-bottom:24px">
-        <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px">
-          Active <span style="color:var(--accent2)">Alerts</span>
-        </h2>
-        <p style="color:var(--text2);font-size:13px">Reviews that triggered alerts with AI-generated responses</p>
-      </div>
-      <div class="alerts-list" id="alerts-list">
-        <div class="empty"><div class="empty-icon">◉</div><p>Loading alerts...</p></div>
-      </div>
-    </div>
-
-    <!-- ── REVIEWS PAGE ── -->
-    <div class="page" id="page-reviews">
-      <div style="margin-bottom:24px">
-        <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px">
-          All <span style="color:var(--accent3)">Reviews</span>
-        </h2>
-        <p style="color:var(--text2);font-size:13px">Complete review database from all platforms</p>
-      </div>
-      <div class="reviews-section">
-        <div class="review-row header">
-          <div>Platform</div><div>Rating</div><div>Sentiment</div>
-          <div>Review</div><div>Draft Response</div><div>Alert</div>
-        </div>
-        <div id="all-reviews-body">
-          <div class="empty"><div class="empty-icon">◫</div><p>Loading...</p></div>
-        </div>
-      </div>
-    </div>
-
   </div>
-</div>
 
-<script>
-const API = window.location.origin + '/api/v1';
-let analyticsData = null;
-let reviewsData = [];
-let chartsInitialized = false;
-let analyticsChartsInitialized = false;
+  <script>
+    const API = window.location.origin + '/api/v1';
+    let analyticsData = null;
+    let reviewsData = [];
+    let chartsInitialized = false;
+    let analyticsChartsInitialized = false;
 
-const chartDefaults = {
-  plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 11 } } } },
-  scales: {
-    x: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
-  }
-};
+    const chartDefaults = {
+      plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#475569', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    };
 
-function showPage(name, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  el.classList.add('active');
+    function showPage(name, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      el.classList.add('active');
 
-  const titles = { dashboard: 'Overview <span style="color:var(--accent)">Dashboard</span>', analytics: 'Deep <span style="color:var(--accent)">Analytics</span>', alerts: 'Active <span style="color:var(--accent2)">Alerts</span>', reviews: 'All <span style="color:var(--accent3)">Reviews</span>' };
-  document.getElementById('page-heading').innerHTML = titles[name];
+      const titles = { dashboard: 'Overview <span style="color:var(--accent)">Dashboard</span>', analytics: 'Deep <span style="color:var(--accent)">Analytics</span>', alerts: 'Active <span style="color:var(--accent2)">Alerts</span>', reviews: 'All <span style="color:var(--accent3)">Reviews</span>' };
+      document.getElementById('page-heading').innerHTML = titles[name];
 
-  if (name === 'analytics' && !analyticsChartsInitialized) buildAnalyticsCharts();
-  if (name === 'alerts') buildAlerts();
-  if (name === 'reviews') buildAllReviews();
-}
+      if (name === 'analytics' && !analyticsChartsInitialized) buildAnalyticsCharts();
+      if (name === 'alerts') buildAlerts();
+      if (name === 'reviews') buildAllReviews();
+    }
 
-async function loadAnalytics() {
-  try {
-    const res = await fetch(`${API}/analytics`);
-    analyticsData = await res.json();
-    updateStats();
-    if (!chartsInitialized) { buildDashboardCharts(); chartsInitialized = true; }
-  } catch(e) { console.error(e); }
-}
+    async function loadAnalytics() {
+      try {
+        const res = await fetch(`${API}/analytics`);
+        analyticsData = await res.json();
+        updateStats();
+        if (!chartsInitialized) { buildDashboardCharts(); chartsInitialized = true; }
+      } catch (e) { console.error(e); }
+    }
 
-async function loadReviews() {
-  try {
-    const res = await fetch(`${API}/reviews?limit=50`);
-    reviewsData = await res.json();
-    buildReviewsTable();
-  } catch(e) { console.error(e); }
-}
+    async function loadReviews() {
+      try {
+        const res = await fetch(`${API}/reviews?limit=50`);
+        reviewsData = await res.json();
+        buildReviewsTable();
+      } catch (e) { console.error(e); }
+    }
 
-function updateStats() {
-  if (!analyticsData) return;
-  const d = analyticsData;
-  document.getElementById('s-total').textContent = d.total_reviews ?? 0;
-  document.getElementById('s-alerts').textContent = d.total_alerts ?? 0;
-  document.getElementById('s-rating').textContent = d.avg_star_rating ?? '—';
-  const total = (d.positive_count||0) + (d.negative_count||0) + (d.neutral_count||0);
-  const pct = total ? Math.round(((d.positive_count||0)/total)*100) : 0;
-  document.getElementById('s-positive').textContent = pct + '%';
-  const ac = document.getElementById('alert-count');
-  if (d.total_alerts > 0) ac.textContent = d.total_alerts;
-}
+    function updateStats() {
+      if (!analyticsData) return;
+      const d = analyticsData;
+      document.getElementById('s-total').textContent = d.total_reviews ?? 0;
+      document.getElementById('s-alerts').textContent = d.total_alerts ?? 0;
+      document.getElementById('s-rating').textContent = d.avg_star_rating ?? '—';
+      const total = (d.positive_count || 0) + (d.negative_count || 0) + (d.neutral_count || 0);
+      const pct = total ? Math.round(((d.positive_count || 0) / total) * 100) : 0;
+      document.getElementById('s-positive').textContent = pct + '%';
+      const ac = document.getElementById('alert-count');
+      if (d.total_alerts > 0) ac.textContent = d.total_alerts;
+    }
 
-function buildDashboardCharts() {
-  const d = analyticsData;
-  if (!d) return;
+    function buildDashboardCharts() {
+      const d = analyticsData;
+      if (!d) return;
 
-  new Chart(document.getElementById('sentimentChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Negative', 'Neutral', 'Positive'],
-      datasets: [{ data: [d.negative_count||0, d.neutral_count||0, d.positive_count||0], backgroundColor: ['#ff3d6b', '#475569', '#22c55e'], borderWidth: 0, hoverOffset: 6 }]
-    },
-    options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 12 } } }, cutout: '68%' }
-  });
+      new Chart(document.getElementById('sentimentChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Negative', 'Neutral', 'Positive'],
+          datasets: [{ data: [d.negative_count || 0, d.neutral_count || 0, d.positive_count || 0], backgroundColor: ['#ff3d6b', '#475569', '#22c55e'], borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 12 } } }, cutout: '68%' }
+      });
 
-  const platforms = Object.keys(d.by_platform || {});
-  const totals = platforms.map(p => d.by_platform[p].total || 0);
-  new Chart(document.getElementById('platformChart'), {
-    type: 'bar',
-    data: {
-      labels: platforms.length ? platforms : ['No data'],
-      datasets: [{ label: 'Reviews', data: totals.length ? totals : [0], backgroundColor: 'rgba(0,229,255,0.15)', borderColor: '#00e5ff', borderWidth: 1, borderRadius: 6 }]
-    },
-    options: { ...chartDefaults, plugins: { legend: { display: false } } }
-  });
+      const platforms = Object.keys(d.by_platform || {});
+      const totals = platforms.map(p => d.by_platform[p].total || 0);
+      new Chart(document.getElementById('platformChart'), {
+        type: 'bar',
+        data: {
+          labels: platforms.length ? platforms : ['No data'],
+          datasets: [{ label: 'Reviews', data: totals.length ? totals : [0], backgroundColor: 'rgba(0,229,255,0.15)', borderColor: '#00e5ff', borderWidth: 1, borderRadius: 6 }]
+        },
+        options: { ...chartDefaults, plugins: { legend: { display: false } } }
+      });
 
-  new Chart(document.getElementById('alertChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Alerts Sent', 'No Alert'],
-      datasets: [{ data: [d.total_alerts||0, Math.max(0,(d.total_reviews||0)-(d.total_alerts||0))], backgroundColor: ['#ff3d6b', 'rgba(255,255,255,0.05)'], borderWidth: 0 }]
-    },
-    options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 12 } } }, cutout: '68%' }
-  });
-}
+      new Chart(document.getElementById('alertChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Alerts Sent', 'No Alert'],
+          datasets: [{ data: [d.total_alerts || 0, Math.max(0, (d.total_reviews || 0) - (d.total_alerts || 0))], backgroundColor: ['#ff3d6b', 'rgba(255,255,255,0.05)'], borderWidth: 0 }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 12 } } }, cutout: '68%' }
+      });
+    }
 
-function buildReviewsTable() {
-  const el = document.getElementById('reviews-table-body');
-  if (!reviewsData.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div><p>No reviews yet. Use /api/v1/ingest to add some!</p></div>'; return; }
-  el.innerHTML = reviewsData.slice(0,10).map(r => `
+    function buildReviewsTable() {
+      const el = document.getElementById('reviews-table-body');
+      if (!reviewsData.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div><p>No reviews yet. Use /api/v1/ingest to add some!</p></div>'; return; }
+      el.innerHTML = reviewsData.slice(0, 10).map(r => `
     <div class="review-row">
       <div><span class="platform-badge">${r.platform}</span></div>
-      <div><span class="stars">${'★'.repeat(r.stars||1)}${'☆'.repeat(5-(r.stars||1))}</span></div>
+      <div><span class="stars">${'★'.repeat(r.stars || 1)}${'☆'.repeat(5 - (r.stars || 1))}</span></div>
       <div><span class="sentiment-badge ${r.sentiment_label}">${r.sentiment_label}</span></div>
       <div class="review-text-cell" title="${r.text}">"${r.text}"</div>
-      <div class="review-text-cell" title="${r.draft_response||''}">${r.draft_response ? '"'+r.draft_response.substring(0,60)+'..."' : '<span style="color:var(--text3)">—</span>'}</div>
+      <div class="review-text-cell" title="${r.draft_response || ''}">${r.draft_response ? '"' + r.draft_response.substring(0, 60) + '..."' : '<span style="color:var(--text3)">—</span>'}</div>
       <div>${r.alert_sent ? '<span class="alert-tag">🚨 Sent</span>' : '<span class="no-alert">—</span>'}</div>
     </div>
   `).join('');
-}
+    }
 
-function buildAnalyticsCharts() {
-  analyticsChartsInitialized = true;
-  const d = analyticsData;
-  if (!d) return;
+    function buildAnalyticsCharts() {
+      analyticsChartsInitialized = true;
+      const d = analyticsData;
+      if (!d) return;
 
-  // Sentiment score dist (fake bell curve from real data)
-  const scores = reviewsData.map(r => r.sentiment_score || 0);
-  const buckets = [0,0,0,0,0,0,0,0,0,0];
-  scores.forEach(s => { const i = Math.min(9, Math.floor(s*10)); buckets[i]++; });
-  new Chart(document.getElementById('sentimentDistChart'), {
-    type: 'line',
-    data: {
-      labels: ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9+'],
-      datasets: [{ label: 'Reviews', data: buckets, borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.06)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#00e5ff', pointRadius: 3 }]
-    },
-    options: { ...chartDefaults, plugins: { legend: { display: false } } }
-  });
+      // Sentiment score dist (fake bell curve from real data)
+      const scores = reviewsData.map(r => r.sentiment_score || 0);
+      const buckets = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      scores.forEach(s => { const i = Math.min(9, Math.floor(s * 10)); buckets[i]++; });
+      new Chart(document.getElementById('sentimentDistChart'), {
+        type: 'line',
+        data: {
+          labels: ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9+'],
+          datasets: [{ label: 'Reviews', data: buckets, borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.06)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#00e5ff', pointRadius: 3 }]
+        },
+        options: { ...chartDefaults, plugins: { legend: { display: false } } }
+      });
 
-  // Stars distribution
-  const stars = [1,2,3,4,5].map(s => reviewsData.filter(r => r.stars === s).length);
-  new Chart(document.getElementById('starsChart'), {
-    type: 'bar',
-    data: {
-      labels: ['★','★★','★★★','★★★★','★★★★★'],
-      datasets: [{ data: stars, backgroundColor: ['#ff3d6b','#f97316','#fbbf24','#84cc16','#22c55e'], borderWidth: 0, borderRadius: 6 }]
-    },
-    options: { ...chartDefaults, plugins: { legend: { display: false } } }
-  });
+      // Stars distribution
+      const stars = [1, 2, 3, 4, 5].map(s => reviewsData.filter(r => r.stars === s).length);
+      new Chart(document.getElementById('starsChart'), {
+        type: 'bar',
+        data: {
+          labels: ['★', '★★', '★★★', '★★★★', '★★★★★'],
+          datasets: [{ data: stars, backgroundColor: ['#ff3d6b', '#f97316', '#fbbf24', '#84cc16', '#22c55e'], borderWidth: 0, borderRadius: 6 }]
+        },
+        options: { ...chartDefaults, plugins: { legend: { display: false } } }
+      });
 
-  // Platform bars
-  const platforms = Object.keys(d.by_platform || {});
-  const maxTotal = Math.max(...platforms.map(p => d.by_platform[p].total||0), 1);
-  document.getElementById('platform-bars').innerHTML = platforms.length ? platforms.map(p => {
-    const pd = d.by_platform[p];
-    const pct = Math.round(((pd.total||0)/maxTotal)*100);
-    return `<div class="platform-stat">
+      // Platform bars
+      const platforms = Object.keys(d.by_platform || {});
+      const maxTotal = Math.max(...platforms.map(p => d.by_platform[p].total || 0), 1);
+      document.getElementById('platform-bars').innerHTML = platforms.length ? platforms.map(p => {
+        const pd = d.by_platform[p];
+        const pct = Math.round(((pd.total || 0) / maxTotal) * 100);
+        return `<div class="platform-stat">
       <div class="platform-name"><span style="color:var(--accent);font-size:10px">▸</span> ${p}</div>
       <div class="platform-bar-wrap"><div class="platform-bar" style="width:${pct}%"></div></div>
-      <div class="platform-count">${pd.total||0}</div>
+      <div class="platform-count">${pd.total || 0}</div>
     </div>`;
-  }).join('') : '<div class="empty"><p>No platform data yet</p></div>';
+      }).join('') : '<div class="empty"><p>No platform data yet</p></div>';
 
-  // Triggers chart
-  new Chart(document.getElementById('triggersChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Negative Sentiment', 'Low Rating', 'Competitor Mention'],
-      datasets: [{ data: [d.negative_count||0, d.total_alerts||0, d.competitor_mentions||0], backgroundColor: ['#ff3d6b','#a855f7','#f97316'], borderWidth: 0 }]
-    },
-    options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 10 } } }, cutout: '60%' }
-  });
+      // Triggers chart
+      new Chart(document.getElementById('triggersChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Negative Sentiment', 'Low Rating', 'Competitor Mention'],
+          datasets: [{ data: [d.negative_count || 0, d.total_alerts || 0, d.competitor_mentions || 0], backgroundColor: ['#ff3d6b', '#a855f7', '#f97316'], borderWidth: 0 }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'DM Mono', size: 10 }, padding: 10 } } }, cutout: '60%' }
+      });
 
-  // Key metrics
-  document.getElementById('key-metrics').innerHTML = [
-    { label: 'Avg Sentiment Score', value: d.avg_sentiment_score || '—', color: 'var(--accent)' },
-    { label: 'Competitor Mentions', value: d.competitor_mentions || 0, color: 'var(--accent3)' },
-    { label: 'Alert Rate', value: d.total_reviews ? Math.round((d.total_alerts/d.total_reviews)*100)+'%' : '—', color: 'var(--accent2)' },
-    { label: 'Positive Reviews', value: d.positive_count || 0, color: 'var(--accent4)' },
-  ].map(m => `
+      // Key metrics
+      document.getElementById('key-metrics').innerHTML = [
+        { label: 'Avg Sentiment Score', value: d.avg_sentiment_score || '—', color: 'var(--accent)' },
+        { label: 'Competitor Mentions', value: d.competitor_mentions || 0, color: 'var(--accent3)' },
+        { label: 'Alert Rate', value: d.total_reviews ? Math.round((d.total_alerts / d.total_reviews) * 100) + '%' : '—', color: 'var(--accent2)' },
+        { label: 'Positive Reviews', value: d.positive_count || 0, color: 'var(--accent4)' },
+      ].map(m => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:12px;color:var(--text2)">${m.label}</div>
       <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:${m.color}">${m.value}</div>
     </div>
   `).join('');
-}
+    }
 
-function buildAlerts() {
-  const alerts = reviewsData.filter(r => r.alert_sent);
-  const el = document.getElementById('alerts-list');
-  if (!alerts.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◉</div><p>No alerts yet. Good news!</p></div>'; return; }
-  el.innerHTML = alerts.map(r => `
+    function buildAlerts() {
+      const alerts = reviewsData.filter(r => r.alert_sent);
+      const el = document.getElementById('alerts-list');
+      if (!alerts.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◉</div><p>No alerts yet. Good news!</p></div>'; return; }
+      el.innerHTML = alerts.map(r => `
     <div class="alert-card ${r.competitor_mentioned ? 'competitor' : ''}">
       <div class="alert-top">
         <span class="platform-badge">${r.platform}</span>
-        <span class="stars">${'★'.repeat(r.stars||1)}</span>
+        <span class="stars">${'★'.repeat(r.stars || 1)}</span>
         <span class="sentiment-badge negative">${r.sentiment_label}</span>
         ${r.competitor_mentioned ? '<span class="sentiment-badge" style="background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">⚠ Competitor</span>' : ''}
         <span style="margin-left:auto;font-size:11px;color:var(--text3);font-family:\'DM Mono\',monospace">${new Date(r.created_at).toLocaleDateString()}</span>
@@ -958,39 +1149,56 @@ function buildAlerts() {
       ${r.draft_response ? `<div class="draft-box"><div class="draft-label">AI Response Draft</div>${r.draft_response}</div>` : ''}
     </div>
   `).join('');
-}
+    }
 
-function buildAllReviews() {
-  const el = document.getElementById('all-reviews-body');
-  if (!reviewsData.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◫</div><p>No reviews yet</p></div>'; return; }
-  el.innerHTML = reviewsData.map(r => `
+    function buildAllReviews() {
+      const el = document.getElementById('all-reviews-body');
+      if (!reviewsData.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">◫</div><p>No reviews yet</p></div>'; return; }
+      el.innerHTML = reviewsData.map(r => `
     <div class="review-row">
       <div><span class="platform-badge">${r.platform}</span></div>
-      <div><span class="stars">${'★'.repeat(r.stars||1)}</span></div>
+      <div><span class="stars">${'★'.repeat(r.stars || 1)}</span></div>
       <div><span class="sentiment-badge ${r.sentiment_label}">${r.sentiment_label}</span></div>
       <div class="review-text-cell" title="${r.text}">"${r.text}"</div>
-      <div class="review-text-cell">${r.draft_response ? '"'+r.draft_response.substring(0,50)+'..."' : '<span style="color:var(--text3)">—</span>'}</div>
+      <div class="review-text-cell">${r.draft_response ? '"' + r.draft_response.substring(0, 50) + '..."' : '<span style="color:var(--text3)">—</span>'}</div>
       <div>${r.alert_sent ? '<span class="alert-tag">🚨</span>' : '<span class="no-alert">—</span>'}</div>
     </div>
   `).join('');
-}
+    }
 
-async function triggerPoll() {
-  try {
-    await fetch(`${API}/trigger-poll`, { method: 'POST' });
-    setTimeout(refreshAll, 2000);
-  } catch(e) {}
-}
+    async function triggerPoll() {
+      try {
+        await fetch(`${API}/trigger-poll`, { method: 'POST' });
+        setTimeout(refreshAll, 2000);
+      } catch (e) { }
+    }
 
-async function refreshAll() {
-  await loadAnalytics();
-  await loadReviews();
-}
+    async function loadSchedulerStatus() {
+      try {
+        const res = await fetch(`${API}/scheduler/status`);
+        const data = await res.json();
+        if (data.next_poll) {
+          const next = new Date(data.next_poll);
+          document.getElementById('next-poll').textContent =
+            next.toLocaleTimeString();
+        }
+        document.getElementById('last-updated').textContent =
+          new Date().toLocaleTimeString();
+      } catch(e) {}
+    }
 
-// Init
-loadAnalytics();
-loadReviews();
-setInterval(refreshAll, 30000);
-</script>
+    async function refreshAll() {
+      await loadAnalytics();
+      await loadReviews();
+      await loadSchedulerStatus();
+    }
+
+    // Init
+    loadAnalytics();
+    loadReviews();
+    setInterval(refreshAll, 30000);
+    loadSchedulerStatus();
+  </script>
 </body>
+
 </html>

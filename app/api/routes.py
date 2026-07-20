@@ -80,3 +80,14 @@ def trigger_poll():
     from app.workers.tasks import poll_reviews
     task = poll_reviews.delay()
     return {"task_id": task.id, "status": "queued"}
+
+@router.get("/scheduler/status")
+def scheduler_status():
+    """Scheduler ka status aur next run time"""
+    from app.main import scheduler
+    job = scheduler.get_job('review_poller')
+    return {
+        "running": scheduler.running,
+        "next_poll": str(job.next_run_time) if job else None,
+        "job_id": "review_poller"
+    }
