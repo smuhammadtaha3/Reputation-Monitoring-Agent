@@ -2,13 +2,7 @@ from transformers import pipeline
 import os
 
 _classifier = None
-
-# Pehle local fine-tuned model dhundo, warna original use karo
-MODEL_PATH = os.path.join(
-    os.path.dirname(__file__), '../../models/fine_tuned_model'
-)
-MODEL_NAME = MODEL_PATH if os.path.exists(MODEL_PATH) \
-             else "cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL_NAME = os.environ.get("MODEL_NAME", "smuhammadtaha3/reputation-sentiment-model")
 
 LABEL_MAP = {
     "label_0": "negative",
@@ -27,15 +21,15 @@ def get_classifier():
             task="sentiment-analysis",
             model=MODEL_NAME,
             device=-1
-        )
+        )  # type: ignore
     return _classifier
 
 def analyze(text: str) -> dict:
     clf    = get_classifier()
-    result = clf(text[:512])[0]
-    label  = LABEL_MAP.get(result["label"].lower(), result["label"].lower())
+    result = clf(text[:512])[0]  # type: ignore
+    label  = LABEL_MAP.get(result["label"].lower(), result["label"].lower())  # type: ignore
     return {
         "label":       label,
-        "score":       round(result["score"], 4),
+        "score":       round(result["score"], 4),  # type: ignore
         "is_negative": label == "negative"
     }
