@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.api.routes import router
 import os
 import logging
+from app.services.sentiment import get_classifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +26,12 @@ def run_poll():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup — scheduler shuru karo
+    # Startup — model preload karo taake pehli request timeout na ho
+    logger.info("Preloading sentiment model...")
+    get_classifier()
+    logger.info("Model loaded successfully")
+
+    # Scheduler shuru karo
     scheduler.add_job(
         run_poll,
         'interval',
