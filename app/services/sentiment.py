@@ -2,7 +2,7 @@ from transformers import pipeline
 import os
 
 _classifier = None
-MODEL_NAME = os.environ.get("MODEL_NAME", "smuhammadtaha3/reputation-sentiment-model")
+MODEL_NAME = os.environ.get("MODEL_NAME", "TAHA4/reputation-sentiment-model")
 
 LABEL_MAP = {
     "label_0": "negative",
