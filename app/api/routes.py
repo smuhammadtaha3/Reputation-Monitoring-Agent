@@ -78,8 +78,8 @@ def trend():
 @router.post("/trigger-poll")
 def trigger_poll():
     from app.workers.tasks import poll_reviews
-    task = poll_reviews.delay()
-    return {"task_id": task.id, "status": "queued"}
+    result = poll_reviews()
+    return {"status": "completed", "result": result}
 
 @router.get("/scheduler/status")
 def scheduler_status():
