@@ -7,7 +7,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.api.routes import router
 import os
 import logging
-from app.services.sentiment import get_classifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
