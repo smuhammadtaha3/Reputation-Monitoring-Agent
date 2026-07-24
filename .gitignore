@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 models/
 fine_tuned_model/
+requirements-dev.txt
