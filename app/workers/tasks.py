@@ -7,6 +7,7 @@ from datetime import datetime
 
 PLATFORMS = ["google", "yelp", "facebook", "trustpilot", "linkedin"]
 
+
 def poll_reviews():
     results = {"processed": 0, "alerts_sent": 0, "platforms": []}
 
