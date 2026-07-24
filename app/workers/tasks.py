@@ -1,4 +1,3 @@
-from app.workers.celery_app import celery
 from app.services.scraper import fetch_reviews, has_competitor_mention
 from app.services.sentiment import analyze
 from app.services.draft import generate_response
@@ -8,7 +7,6 @@ from datetime import datetime
 
 PLATFORMS = ["google", "yelp", "facebook", "trustpilot", "linkedin"]
 
-@celery.task(name="app.workers.tasks.poll_reviews")
 def poll_reviews():
     results = {"processed": 0, "alerts_sent": 0, "platforms": []}
 
