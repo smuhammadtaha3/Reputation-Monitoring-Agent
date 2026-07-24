@@ -1,5 +1,6 @@
 from transformers import pipeline
 import os
+import torch
 
 _classifier = None
 MODEL_NAME = os.environ.get("MODEL_NAME", "TAHA4/reputation-sentiment-model")
@@ -20,8 +21,8 @@ def get_classifier():
         _classifier = pipeline(
             task="sentiment-analysis",
             model=MODEL_NAME,
-            device=-1
-            torch_dtype=torch.float32,
+            device=-1,
+            torch_dtype= torch.float32,
             model_kwargs={"low_cpu_mem_usage": True}
         )  # type: ignore
     return _classifier

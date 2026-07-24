@@ -1,7 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
-
 supabase==2.7.4
 transformers==4.40.0
 torch==2.3.0+cpu
@@ -12,6 +11,5 @@ python-dotenv==1.0.1
 pydantic-settings==2.2.1
 pandas==2.2.0
 numpy==1.26.4
-
 aiofiles==23.2.1
 APScheduler==3.10.4
