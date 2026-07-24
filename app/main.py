@@ -28,7 +28,6 @@ def run_poll():
 async def lifespan(app: FastAPI):
     # Startup — model preload karo taake pehli request timeout na ho
     logger.info("Preloading sentiment model...")
-    get_classifier()
     logger.info("Model loaded successfully")
 
     # Scheduler shuru karo
